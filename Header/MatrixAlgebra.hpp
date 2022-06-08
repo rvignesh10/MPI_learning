@@ -36,13 +36,13 @@ void Vector<T,N>::setValue(int idx, T value){
 
 template<typename T, const int N> 
 T Vector<T,N>::getValue(int idx){
-    if(idx>=N){std::cerr << "Index youre trying to access exceeds vector length" << std::endl; return (T)0;}
+    if(idx>=N){std::cerr << "Index youre trying to access exceeds vector length" << std::endl; return (T)0.0;}
     else{ return m_Vector[idx][0]; }
 }
 
 template<typename T, const int N>
 T Vector<T,N>::dotProduct(Vector<T,N> a){
-    T sum= (T)0;
+    T sum= (T)0.0;
     for (int i=0; i<N; i++){
         sum += a.getValue(i)*getValue(i);
     }
