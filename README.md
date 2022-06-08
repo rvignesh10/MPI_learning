@@ -7,6 +7,7 @@ Please make sure you have MPICH-4.0.2 installed and you can find the package at 
 > 2. Perform ``` ./configure --prefix=/installation/directory/path --disable-fortran ```
 > 3. Run ``` make; sudo install ```
 > 4. Check if you've installed correctly using ``` mpiexec --version ```
+> 5. Ensure that you have set the compiler to use ``` export MPICXX=~/bin/mpicxx ```
 
 ## Examples
 This folder will have examples and instructions on how to compile the examples and run them. 
