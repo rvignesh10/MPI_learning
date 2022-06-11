@@ -9,5 +9,18 @@ Please make sure you have MPICH-4.0.2 installed and you can find the package at 
 > 4. Check if you've installed correctly using ``` mpiexec --version ```
 > 5. Ensure that you have set the compiler to use ``` export MPICXX=~/bin/mpicxx ```
 
-## Examples
-This folder will have examples and instructions on how to compile the examples and run them. 
+## Header
+This folder will have the required header files that needs to be included in order to run test and *Enter*
+example cases. The header files included are for 1D mesh generation, FiniteElementSpace creation and *Enter*
+IntegrationRule for these discretized spaces.
+
+## test
+The test folder will help in testing some of the changes added in the header files and make sure the *Enter*
+the functionality of the defined classes are intact. 
+
+## src
+This will contain the source code for the examples we will use to learn about MPI and how to use it for *Enter*
+Numerical Methods and processes. If you either make a change to the source code or add a new source code *Enter*
+you can compile and run the executable typing the following in your command window prompt *Enter*
+``` mpicxx <file_name.cpp> -o <executable_name> ```
+``` mpirun -np x ./executable_name ```

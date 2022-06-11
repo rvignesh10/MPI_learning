@@ -5,7 +5,7 @@ PhD student at Optimal Design Lab, Rensselaer Polytechnic Institute */
 #include <iostream>
 #include <mpi.h>
 #include <math.h>
-#include "../Header/FiniteElement.hpp"
+#include "../../Header/FiniteElement.hpp"
 
 
 int main(int arg, char *argv[]){
@@ -43,7 +43,7 @@ int main(int arg, char *argv[]){
         fes.get_FE_Boundary_Info(i,l_bdr);
         Vector<double,INT_PTS+TWO> fval;
         for (int j=0; j<INT_PTS+TWO; j++){
-            fval.setValue(j,powf(points.getValue(j),2.0)); // function is x^2
+            fval.setValue(j,pow(points.getValue(j),2.0)); // function is x^2
         }
         double s = fval.dotProduct(weight)*(l_bdr.getValue(1)-l_bdr.getValue(0))*0.5;
         l_int += s;
@@ -56,8 +56,8 @@ int main(int arg, char *argv[]){
             MPI_Recv(&l_int,1,MPI_DOUBLE,i,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
             g_int += l_int;
         }
-        std::cout<< "The global numerical integration of the function x^2 from (0,10) is:" << g_int << std::endl;
-        std::cout<< "The global exact integration of the function x^2 from (0,10) is:" <<((pow(g_xlim2,3.0)-pow(g_xlim1,3.))/3.0)<< std::endl;
+        std::cout<< "The global numerical integration of the function x^2 within domain is:" << g_int << std::endl;
+        std::cout<< "The global exact integration of the function x^2 within domain is:" <<((pow(g_xlim2,3.0)-pow(g_xlim1,3.))/3.0)<< std::endl;
     }
     else{
         //std::cout << "Local integration from world rank " << world_rank << "is:" << l_int << std::endl; 
