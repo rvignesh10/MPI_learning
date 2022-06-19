@@ -46,7 +46,7 @@ void Mesh<Nelem>::disp_mesh(){
     x.displayVector();
 }
 
-/* -------------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------------------------- */
 template<const int order>
 class FiniteElement {
 
@@ -55,7 +55,7 @@ class FiniteElement {
         double DOF_loc;
         Vector<double,TWO> ElemBdr;
         Vector<double,order+ONE> InterpPts;
-        Vector<int,order+ONE> InterpDOF;
+        //Vector<int,order+ONE> InterpDOF;
         Vector<double,TWO+INT_PTS> IntPts;
         Vector<double,TWO+INT_PTS> IntWts;
     
@@ -71,8 +71,11 @@ template<const int order>
 void FiniteElement<order>::set_Element_Info(int id, double current_loc, double next_loc){
     ElemID = id+ONE;
     DOF_loc = (current_loc+next_loc)/2.0 ;
-    ElemBdr.setValue(ZERO,current_loc);
-    ElemBdr.setValue(ONE,next_loc);
+    ElemBdr.setValue(ZERO,current_loc); ElemBdr.setValue(ONE,next_loc);
+    double dx = (next_loc - current_loc)/(double)(order);
+    for (int i=0; i<order+ONE; i++){
+        InterpPts.setValue(i,current_loc+(double)(i)*dx);
+    }
     IntegrationRule<double,TWO+INT_PTS>(current_loc,next_loc,IntPts,IntWts);
 }
 
@@ -91,7 +94,7 @@ void FiniteElement<order>::get_Integration_Info(Vector<double,INT_PTS+TWO> &p, V
     w = IntWts;
 }
 
-// /* -------------------------------------------------------------------------------- */
+// /* ------------------------------------------------------------------------------------------------------------ */
 template<const int order, const int Nelem>
 class FiniteElementSpace {
     private:

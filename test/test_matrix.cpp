@@ -32,33 +32,39 @@ int main(){
     // Test Addition and Subtraction
     testMat.Add(m,testMat);
     printMat(testMat, "Addition");
+    testMat.Subtract(5.0,testMat);
+    printMat(testMat,"Subtract Operation");
 
     // Test Vector Multiplication
     Vector<double,n> u(row,N);
-    m.MultVector(u,u);
+    m.Multiply(u,u);
     std::cout<< "The matrix multiplication of a vector operation is: " << std::endl;
     u.displayVector();
     std::cout<<std::endl;
 
     // Test identity matrix
-    Matrix<double,n,n> eye(1);
+    Matrix<double,n,n> eye(1.0);
     printMat(eye,"Identity");
 
     // Test Matrix Multiplication - scalar
-    eye.MultScalar(4.0,eye);
+    eye.Multiply(3.0,eye);
     printMat(eye,"Matrix scalar multiplication");
 
     // Test Matrix vector multiplication
     u.init_();
     u.setVector(row,N);
-    eye.MultVector(u,u);
+    eye.Multiply(u,u);
+    std::cout<<"Vector after multiplication is: " <<std::endl; 
     u.displayVector();
     std::cout<<std::endl;
 
     // Test Matrix multiplication 
-    testMat.MultMatrix(m,testMat);
+    m.Multiply(eye,testMat);
     printMat(testMat,"Matrix multiplication");
 
-    // Test exporting as rowMajor
+    // Test Element by Element Multiplication
+    Matrix<double,n,n> testMat2(eye,testMat);
+    printMat(testMat2,"Element Multiplication");
+    
     return 0;
 }

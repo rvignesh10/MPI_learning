@@ -11,7 +11,7 @@ class Vector{
         T m_Vector[N];
     public:
         Vector(); // Constructor
-        Vector(T *v, int Size); // Constructor to initialize with vales
+        Vector(T *v, int Size); // Constructor to initialize with values
         void init_();
         int getLength_(){
             return N;
@@ -19,7 +19,12 @@ class Vector{
         void setValue(int idx, T value);
         void setVector(T *vec, int Size);
         T getValue(int idx);
-        void MultScalar(T scale);
+        void Add(T val, Vector<T,N> &v_out);
+        void Add(Vector<T,N> v_in, Vector<T,N> &v_out);
+        void Subtract(T val, Vector<T,N> &v_out);
+        void Subtract(Vector<T,N> v_in, Vector<T,N> &v_out);
+        void Scale(T scale, Vector<T,N> &v_out);
+        void ElementMultiplication(Vector<T,N> v_in, Vector<T,N> &v_out);
         T dotProduct(Vector<T,N> a);
         T *getData();
         void displayVector();
@@ -77,9 +82,44 @@ T Vector<T,N>::getValue(int idx){
 }
 
 template<typename T, const int N>
-void Vector<T,N>::MultScalar(T scale){
+void Vector<T,N>::Add(T val, Vector<T,N> &v_out){
     for(int i=0; i<N; i++){
-        m_Vector[i] *= scale;
+        v_out.setValue(i,m_Vector[i]+val);
+    }
+}
+
+template<typename T, const int N>
+void Vector<T,N>::Add(Vector<T,N> v_in, Vector<T,N> &v_out){
+    for(int i=0; i<N; i++){
+        v_out.setValue(i,m_Vector[i]+v_in.getValue(i));
+    }
+}
+
+template<typename T, const int N>
+void Vector<T,N>::Subtract(T val, Vector<T,N> &v_out){
+    for(int i=0; i<N; i++){
+        v_out.setValue(i,m_Vector[i]-val);
+    }
+}
+
+template<typename T, const int N>
+void Vector<T,N>::Subtract(Vector<T,N> v_in, Vector<T,N> &v_out){
+    for(int i=0; i<N; i++){
+        v_out.setValue(i,m_Vector[i]-v_in.getValue(i));
+    }
+}
+
+template<typename T, const int N>
+void Vector<T,N>::Scale(T scale, Vector<T,N> &v_out){
+    for(int i=0; i<N; i++){
+        v_out.setValue(m_Vector[i] * scale);
+    }
+}
+
+template<typename T, const int N>
+void Vector<T,N>::ElementMultiplication(Vector<T,N> v_in, Vector<T,N> &v_out){
+    for(int i=0; i<N; i++){
+        v_out.setValue(i, getValue(i)*v_in.getValue(i)); 
     }
 }
 
@@ -117,7 +157,9 @@ class Matrix{
         void getSize_(){
             std::cout << "The size is:" << m << " x " << n << std::endl;
         }
-        Matrix(int i); // Matrix to generate i*Identity matrix 
+        Matrix(T i); // Matrix to generate i*Identity matrix 
+        Matrix(Vector<T,m> v1, Vector<T,n> v2);
+        Matrix(Matrix<T,m,n> m1, Matrix<T,m,n> m2);
         void init_();
         void setValue(int i, int j, T val);
         void setRow(int row_idx, Vector<T,n> r);
@@ -125,13 +167,17 @@ class Matrix{
         void getRow(int row_idx, Vector<T,n> &r);
         void getColumn(int col_idx, Vector<T,m> &c);
         void Transpose(Matrix<T,n,m> &m_Matrix_T);
+        void Add(T val, Matrix<T,m,n> &M_out);
         void Add(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out);
+        void Subtract(T val, Matrix<T,m,n> &M_out);
         void Subtract(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out);
-        void MultScalar(T scale, Matrix<T,m,n> &M_out);
-        void MultVector(Vector<T,n> u, Vector<T,m> &u_out);
+        void Multiply(T scale, Matrix<T,m,n> &M_out);
+        void Multiply(Vector<T,n> u, Vector<T,m> &u_out);
         template<const int C>
-        void MultMatrix(Matrix<T,n,C> M_in, Matrix<T,m,C> &M_out);
+        void Multiply(Matrix<T,n,C> M_in, Matrix<T,m,C> &M_out);
+        void ElementMultiplication(Matrix<T,m,n> m1, Matrix<T,m,n> &m2);
         bool checkSquare(){return SQUARE;}
+        void Invert(Matrix<T,n,n> &inv);
         T *exportRowMajor();
         void setRowMajor(T *rowMajor, int Size);
 };
@@ -160,11 +206,11 @@ Matrix<T,m,n>::Matrix(T *rowMajor, int Size){
 }
 
 template<typename T, const int m, const int n>
-Matrix<T,m,n>::Matrix(int i){
+Matrix<T,m,n>::Matrix(T i){
     init_();
     if(SQUARE){
         for(int idx=0; idx<n; idx++){
-            m_Matrix[idx][idx] = (T)(i)*(T)(1.0);
+            m_Matrix[idx][idx] = (i)*(T)(1.0);
         }
     }
     else{
@@ -173,10 +219,30 @@ Matrix<T,m,n>::Matrix(int i){
 }
 
 template<typename T, const int m, const int n>
+Matrix<T,m,n>::Matrix(Vector<T,m> v1, Vector<T,n> v2){
+    Vector<T,m> temp;
+    for (int i=0; i<n; i++){
+        v1.Scale(v2.getValue(i),temp);
+        setColumn(i,temp);
+    }
+}
+
+template<typename T, const int m, const int n>
+Matrix<T,m,n>::Matrix(Matrix<T,m,n> m1, Matrix<T,m,n> m2){
+    Vector<T,m> t1,t2,t3;
+    for(int j=0; j<n; j++){
+        m1.getColumn(j,t1);
+        m2.getColumn(j,t2);
+        t1.ElementMultiplication(t2,t3);
+        setColumn(j,t3);
+    }
+}
+
+template<typename T, const int m, const int n>
 void Matrix<T,m,n>::init_(){
     for (int i=0; i<m; i++){
         for (int j=0; j<n; j++){
-            m_Matrix[i][j] = (T) 0.0;
+            m_Matrix[i][j] = (T)(0.0);
         }
     }
     SQUARE = (m==n)?true:false;
@@ -250,6 +316,16 @@ void Matrix<T,m,n>::Transpose(Matrix<T,n,m> &m_Matrix_T){
 }
 
 template<typename T, const int m, const int n>
+void Matrix<T,m,n>::Add(T val, Matrix<T,m,n> &M_out){
+    for(int i=0; i<m; i++){
+        Vector<T,n> r;
+        getRow(i,r);
+        r.Add(val,r);
+        M_out.setRow(i,r);
+    }
+}
+
+template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Add(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
     T *rm1 = exportRowMajor();
     T *rm2 = M_in.exportRowMajor();
@@ -260,6 +336,16 @@ void Matrix<T,m,n>::Add(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
     Matrix<T,m,n> test(vec, m*n);
     //M_out.setRowMajor(vec, m*n);
     M_out = test;
+}
+
+template<typename T, const int m, const int n>
+void Matrix<T,m,n>::Subtract(T val, Matrix<T,m,n> &M_out){
+    for(int i=0; i<m; i++){
+        Vector<T,n> r;
+        getRow(i,r);
+        r.Subtract(val,r);
+        M_out.setRow(i,r);
+    }
 }
 
 template<typename T, const int m, const int n>
@@ -276,7 +362,7 @@ void Matrix<T,m,n>::Subtract(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
 }
 
 template<typename T, const int m, const int n>
-void Matrix<T,m,n>::MultScalar(T scale, Matrix<T,m,n> &M_out){
+void Matrix<T,m,n>::Multiply(T scale, Matrix<T,m,n> &M_out){
     for(int i=0; i<m; i++){
         for(int j=0; j<n; j++){
             M_out.setValue(i,j,m_Matrix[i][j]*scale);
@@ -285,7 +371,7 @@ void Matrix<T,m,n>::MultScalar(T scale, Matrix<T,m,n> &M_out){
 }
 
 template<typename T, const int m, const int n>
-void Matrix<T,m,n>::MultVector(Vector<T,n> u, Vector<T,m> &u_out){
+void Matrix<T,m,n>::Multiply(Vector<T,n> u, Vector<T,m> &u_out){
     for(int i=0; i<m; i++){
         Vector<T,n> row ;
         getRow(i,row);
@@ -296,7 +382,7 @@ void Matrix<T,m,n>::MultVector(Vector<T,n> u, Vector<T,m> &u_out){
 
 template<typename T, const int m, const int n>
 template<const int C>
-void Matrix<T,m,n>::MultMatrix(Matrix<T,n,C> M_in, Matrix<T,m,C> &M_out){
+void Matrix<T,m,n>::Multiply(Matrix<T,n,C> M_in, Matrix<T,m,C> &M_out){
     for(int i=0; i<m; i++){
         Vector<T,n> row;
         getRow(i,row);
@@ -306,6 +392,27 @@ void Matrix<T,m,n>::MultMatrix(Matrix<T,n,C> M_in, Matrix<T,m,C> &M_out){
             T val = row.dotProduct(column);
             M_out.setValue(i,j,val);
         }
+    }
+}
+
+template<typename T, const int m, const int n>
+void Matrix<T,m,n>::ElementMultiplication(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
+    Vector<T,m> temp1, temp2, temp3;
+    for(int j=0; j<n; j++){
+        getColumn(j,temp1);
+        M_in.getColumn(j,temp2);
+        temp1.ElementMultiplication(temp2,temp3);
+        M_out.setColumn(j,temp3);
+    }
+}
+
+template<typename T, const int m, const int n>
+void Matrix<T,m,n>::Invert(Matrix<T,n,n> & inv){
+    if(SQUARE){
+
+    }
+    else {
+        std::cerr<< "Matrix is not a square matrix and cannot be inverted" << std::endl;
     }
 }
 
