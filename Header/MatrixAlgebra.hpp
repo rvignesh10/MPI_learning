@@ -31,11 +31,13 @@ class Vector{
 
 };
 
+/// default constructor
 template<typename T, const int N>
 Vector<T,N>::Vector(){
    init_();
 }
 
+/// Initialize the Vector object with a pointer to an array
 template<typename T, const int N>
 Vector<T,N>::Vector(T *v, int Size){
     if(N > Size){
@@ -49,6 +51,7 @@ Vector<T,N>::Vector(T *v, int Size){
     }
 }
 
+/// Initialize the Vector object to zeros
 template<typename T, const int N>
 void Vector<T,N>::init_(){
     for (int i=0; i<N; i++){
@@ -56,12 +59,14 @@ void Vector<T,N>::init_(){
     }
 }
 
+/// set Value at index i to (value) of current Vector object
 template<typename T, const int N>
 void Vector<T,N>::setValue(int idx, T value){
     if(idx >= N){ std::cerr << "Index length greater than N" << std::endl;}
     else{ m_Vector[idx] = value; }
 }
 
+/// Set the entire vector in current Vector object to the pointer *vec 
 template<typename T, const int N>
 void Vector<T,N>::setVector(T *vec, int Size){
     if(N > Size){
@@ -75,12 +80,15 @@ void Vector<T,N>::setVector(T *vec, int Size){
     }
 }
 
+/// get Value of certain index of current Vector object
 template<typename T, const int N> 
 T Vector<T,N>::getValue(int idx){
     if(idx>=N){std::cerr << "Index youre trying to access exceeds vector length" << std::endl; return (T)0.0;}
     else{ return m_Vector[idx]; }
 }
 
+/// Adds the scalar value (val) to all elements of current Vector object and assigns it
+/// to v_out. v_out = current Vector object + (val)
 template<typename T, const int N>
 void Vector<T,N>::Add(T val, Vector<T,N> &v_out){
     for(int i=0; i<N; i++){
@@ -88,6 +96,8 @@ void Vector<T,N>::Add(T val, Vector<T,N> &v_out){
     }
 }
 
+/// Adds current vector object to v_in and assigns it to v_out
+/// v_out = (current Vector object) + v_in
 template<typename T, const int N>
 void Vector<T,N>::Add(Vector<T,N> v_in, Vector<T,N> &v_out){
     for(int i=0; i<N; i++){
@@ -95,6 +105,8 @@ void Vector<T,N>::Add(Vector<T,N> v_in, Vector<T,N> &v_out){
     }
 }
 
+/// Subtract all values of current Vector object with scalar val and assigns it to 
+/// v_out. v_out = (current Vector object) - (scalar val)
 template<typename T, const int N>
 void Vector<T,N>::Subtract(T val, Vector<T,N> &v_out){
     for(int i=0; i<N; i++){
@@ -102,6 +114,8 @@ void Vector<T,N>::Subtract(T val, Vector<T,N> &v_out){
     }
 }
 
+/// Subtract the current Vector object with the Vector v_in and assigns it to v_out
+/// v_out = (current Vector object) - v_in
 template<typename T, const int N>
 void Vector<T,N>::Subtract(Vector<T,N> v_in, Vector<T,N> &v_out){
     for(int i=0; i<N; i++){
@@ -109,13 +123,17 @@ void Vector<T,N>::Subtract(Vector<T,N> v_in, Vector<T,N> &v_out){
     }
 }
 
+/// Scales the current Vector object by (scale) and assigns it to Vector v_out
+/// v_out = (scale)*(current Vector object)
 template<typename T, const int N>
 void Vector<T,N>::Scale(T scale, Vector<T,N> &v_out){
     for(int i=0; i<N; i++){
-        v_out.setValue(m_Vector[i] * scale);
+        v_out.setValue(i,m_Vector[i] * scale);
     }
 }
 
+/// Does element by element multiplication of the values of the current Vector and
+/// Vector v_in and then assigns that value to Vector v_out
 template<typename T, const int N>
 void Vector<T,N>::ElementMultiplication(Vector<T,N> v_in, Vector<T,N> &v_out){
     for(int i=0; i<N; i++){
@@ -123,6 +141,8 @@ void Vector<T,N>::ElementMultiplication(Vector<T,N> v_in, Vector<T,N> &v_out){
     }
 }
 
+/// Dot Product of two vectors is performed.
+/// scalar value = (current Vector object)(.) a
 template<typename T, const int N>
 T Vector<T,N>::dotProduct(Vector<T,N> a){
     T sum= (T)0.0;
@@ -132,7 +152,7 @@ T Vector<T,N>::dotProduct(Vector<T,N> a){
     return sum;
 }
 
-
+/// gives the pointer to the place where m_Vector is stored. 
 template<typename T, const int N>
 T *Vector<T,N>::getData(){
     T *temp_vector = NULL;
@@ -140,6 +160,7 @@ T *Vector<T,N>::getData(){
     return temp_vector;
 }
 
+/// Prints vector
 template<typename T, const int N>
 void Vector<T,N>::displayVector(){
     for(int i=0; i<N; i++){std::cout<<m_Vector[i]<<" ";}
@@ -159,7 +180,6 @@ class Matrix{
         }
         Matrix(T i); // Matrix to generate i*Identity matrix 
         Matrix(Vector<T,m> v1, Vector<T,n> v2);
-        Matrix(Matrix<T,m,n> m1, Matrix<T,m,n> m2);
         void init_();
         void setValue(int i, int j, T val);
         void setRow(int row_idx, Vector<T,n> r);
@@ -182,12 +202,14 @@ class Matrix{
         void setRowMajor(T *rowMajor, int Size);
 };
 
+/// Constructor to initialize the Matrix object with 0 values at all entries
 template<typename T, const int m, const int n>
 Matrix<T,m,n>::Matrix(){
     init_();
     
 }
 
+/// Constructor to generate a Matrix object from a rowMajor array 
 template<typename T, const int m, const int n>
 Matrix<T,m,n>::Matrix(T *rowMajor, int Size){
     if (m*n != Size){
@@ -205,6 +227,7 @@ Matrix<T,m,n>::Matrix(T *rowMajor, int Size){
     }
 }
 
+/// Constructor to generate a Matrix object which is i*Identity matrix
 template<typename T, const int m, const int n>
 Matrix<T,m,n>::Matrix(T i){
     init_();
@@ -218,6 +241,7 @@ Matrix<T,m,n>::Matrix(T i){
     }
 }
 
+/// Constructor for object Matrix where current Matrix = v1*v2'
 template<typename T, const int m, const int n>
 Matrix<T,m,n>::Matrix(Vector<T,m> v1, Vector<T,n> v2){
     Vector<T,m> temp;
@@ -227,17 +251,7 @@ Matrix<T,m,n>::Matrix(Vector<T,m> v1, Vector<T,n> v2){
     }
 }
 
-template<typename T, const int m, const int n>
-Matrix<T,m,n>::Matrix(Matrix<T,m,n> m1, Matrix<T,m,n> m2){
-    Vector<T,m> t1,t2,t3;
-    for(int j=0; j<n; j++){
-        m1.getColumn(j,t1);
-        m2.getColumn(j,t2);
-        t1.ElementMultiplication(t2,t3);
-        setColumn(j,t3);
-    }
-}
-
+/// Initialize all values with values 0.0
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::init_(){
     for (int i=0; i<m; i++){
@@ -248,6 +262,7 @@ void Matrix<T,m,n>::init_(){
     SQUARE = (m==n)?true:false;
 }
 
+/// Set one single value of the current Matrix object
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::setValue(int i, int j, T val){
     if(i>=m || j>=n){
@@ -258,6 +273,7 @@ void Matrix<T,m,n>::setValue(int i, int j, T val){
     }
 }
 
+/// Set row of current matrix of index row_idx with Vector r
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::setRow(int row_idx, Vector<T,n> r){
     if (row_idx >= m){
@@ -270,6 +286,7 @@ void Matrix<T,m,n>::setRow(int row_idx, Vector<T,n> r){
     }
 }
 
+/// Set column of current matrix of index col_idx with Vector c
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::setColumn(int col_idx, Vector<T,m> c){
     if (col_idx >= n){
@@ -282,6 +299,7 @@ void Matrix<T,m,n>::setColumn(int col_idx, Vector<T,m> c){
     }
 }
 
+/// Get a row of current Matrix object and assign it to Vector r
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::getRow(int row_idx, Vector<T,n> &r){
     if(row_idx >= m){
@@ -294,6 +312,7 @@ void Matrix<T,m,n>::getRow(int row_idx, Vector<T,n> &r){
     }
 }
 
+/// Get a column of current Matrix object and assign it to Vector c
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::getColumn(int col_idx, Vector<T,m> &c){
     if(col_idx >= n){
@@ -306,6 +325,8 @@ void Matrix<T,m,n>::getColumn(int col_idx, Vector<T,m> &c){
     }
 }
 
+/// Transposes current Matrix object and assigns it to m_Matrix_T
+/// m_Matrix_T = (current Matrix)'
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Transpose(Matrix<T,n,m> &m_Matrix_T){
     for(int i=0; i<m; i++){
@@ -315,6 +336,8 @@ void Matrix<T,m,n>::Transpose(Matrix<T,n,m> &m_Matrix_T){
     }
 }
 
+/// Add a scalar value (val) and add it to all elements of current Matrix object
+/// and assigns it to M_out. M_out = (current Matrix) + val
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Add(T val, Matrix<T,m,n> &M_out){
     for(int i=0; i<m; i++){
@@ -325,6 +348,8 @@ void Matrix<T,m,n>::Add(T val, Matrix<T,m,n> &M_out){
     }
 }
 
+/// Adds current matrix object to Matrix object M_in and assigns to M_out
+/// M_out = (current Matrix) + M_in
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Add(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
     T *rm1 = exportRowMajor();
@@ -338,6 +363,8 @@ void Matrix<T,m,n>::Add(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
     M_out = test;
 }
 
+/// Subtracts a single value from all elements of the current Matrix object and assigns to 
+/// M_out. M_out = M_in - (value)
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Subtract(T val, Matrix<T,m,n> &M_out){
     for(int i=0; i<m; i++){
@@ -348,6 +375,8 @@ void Matrix<T,m,n>::Subtract(T val, Matrix<T,m,n> &M_out){
     }
 }
 
+/// Subtracts the parameter M_in from current Matrix object and assigns it to Matrix object
+/// M_out. M_out = (current Matrix) - M_in
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Subtract(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
     T *rm1 = exportRowMajor();
@@ -361,6 +390,8 @@ void Matrix<T,m,n>::Subtract(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
     M_out = test;
 }
 
+/// Scales each element of current Matrix object by (value scale) and assigns it to
+/// Matrix object M_out. M_out = (scale)*(currentMatrix)
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Multiply(T scale, Matrix<T,m,n> &M_out){
     for(int i=0; i<m; i++){
@@ -370,6 +401,8 @@ void Matrix<T,m,n>::Multiply(T scale, Matrix<T,m,n> &M_out){
     }
 }
 
+/// This multiplies current Matrix object with a vector u and assigns it to 
+/// another vector u_out. u_out = (currentMatrix)*u 
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::Multiply(Vector<T,n> u, Vector<T,m> &u_out){
     for(int i=0; i<m; i++){
@@ -380,6 +413,8 @@ void Matrix<T,m,n>::Multiply(Vector<T,n> u, Vector<T,m> &u_out){
     }
 }
 
+/// Current Matrix object is matrix multiplied with Matrix object M_in and assigned to
+/// Matrix object M_out. M_out = (current)*M_in 
 template<typename T, const int m, const int n>
 template<const int C>
 void Matrix<T,m,n>::Multiply(Matrix<T,n,C> M_in, Matrix<T,m,C> &M_out){
@@ -395,6 +430,8 @@ void Matrix<T,m,n>::Multiply(Matrix<T,n,C> M_in, Matrix<T,m,C> &M_out){
     }
 }
 
+/// Element by Element multiplication is performed on current Matrix object and Matrix
+/// object M_in and assigns it to Matrix object M_out
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::ElementMultiplication(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_out){
     Vector<T,m> temp1, temp2, temp3;
@@ -406,8 +443,9 @@ void Matrix<T,m,n>::ElementMultiplication(Matrix<T,m,n> M_in, Matrix<T,m,n> &M_o
     }
 }
 
+/// Inverts the current matrix and assigns it to Matrix object inverse
 template<typename T, const int m, const int n>
-void Matrix<T,m,n>::Invert(Matrix<T,n,n> & inv){
+void Matrix<T,m,n>::Invert(Matrix<T,n,n> &inv){
     if(SQUARE){
 
     }
@@ -430,6 +468,8 @@ T *Matrix<T,m,n>::exportRowMajor(){
     return rowMajor;
 }
 
+
+/// Rearrange a row major vector into matrix format
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::setRowMajor(T *rowMajor, int Size){
     if(m*n != Size){

@@ -62,9 +62,11 @@ int main(){
     m.Multiply(eye,testMat);
     printMat(testMat,"Matrix multiplication");
 
-    // Test Element by Element Multiplication
-    Matrix<double,n,n> testMat2(eye,testMat);
+    // Test Element by Element Multiplication of vector
+    Matrix<double,n,n> testMat2(u,u);
     printMat(testMat2,"Element Multiplication");
-    
+
+    // Get Data of this object
+
     return 0;
 }
