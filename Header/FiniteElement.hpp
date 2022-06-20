@@ -4,6 +4,7 @@
 #include <iostream>
 #include "MatrixAlgebra.hpp"
 #include "IntegrationRule.hpp"
+#include "LagrangePoly.hpp"
 
 template<const int Nelem>
 class Mesh {
@@ -16,6 +17,7 @@ class Mesh {
         Mesh(double x1, double x2);
         void gen_1D_mesh();
         double get_location(int idx);
+        void getX(Vector<double,Nelem+ONE> &x_out);
         void disp_mesh();
 };
 
@@ -42,6 +44,11 @@ double Mesh<Nelem>::get_location(int idx){
 }
 
 template<const int Nelem>
+void Mesh<Nelem>::getX(Vector<double,Nelem+ONE> &x_out){
+    x_out = x;
+}
+
+template<const int Nelem>
 void Mesh<Nelem>::disp_mesh(){
     x.displayVector();
 }
@@ -55,16 +62,18 @@ class FiniteElement {
         double DOF_loc;
         Vector<double,TWO> ElemBdr;
         Vector<double,order+ONE> InterpPts;
-        //Vector<int,order+ONE> InterpDOF;
+        Vector<int,order+ONE> InterpDOF;
         Vector<double,TWO+INT_PTS> IntPts;
         Vector<double,TWO+INT_PTS> IntWts;
-    
+        Matrix<double,order+ONE,TWO+INT_PTS> ShapeFunc;
+        Matrix<double,order+ONE,TWO+INT_PTS> DShapeFunc;
     public:
         //FiniteElement();
         void set_Element_Info(int id, double current_loc, double next_loc);
         void print_Element_Info();
         void get_Integration_Info(Vector<double,INT_PTS+TWO> &p, Vector<double,INT_PTS+TWO> &w);
         void get_Boundary_Info(Vector<double,TWO> &b){b = ElemBdr;}
+        void H1_ContinuousShapeFn();
 };
 
 template<const int order>
@@ -72,11 +81,10 @@ void FiniteElement<order>::set_Element_Info(int id, double current_loc, double n
     ElemID = id+ONE;
     DOF_loc = (current_loc+next_loc)/2.0 ;
     ElemBdr.setValue(ZERO,current_loc); ElemBdr.setValue(ONE,next_loc);
-    double dx = (next_loc - current_loc)/(double)(order);
-    for (int i=0; i<order+ONE; i++){
-        InterpPts.setValue(i,current_loc+(double)(i)*dx);
-    }
+    Mesh<order> local_mesh(current_loc,next_loc);
+    local_mesh.getX(InterpPts);
     IntegrationRule<double,TWO+INT_PTS>(current_loc,next_loc,IntPts,IntWts);
+    H1_ContinuousShapeFn();
 }
 
 template<const int order>
@@ -86,12 +94,29 @@ void FiniteElement<order>::print_Element_Info(){
     IntPts.displayVector();
     std::cout << std::endl << "Integration weights are:" << std::endl;
     IntWts.displayVector();
+    std::cout << std::endl << "Degrees of Freedom are located at: " << std::endl;
+    InterpPts.displayVector();
+    std::cout << std::endl << "Shape Function values are: " << std::endl;
+    ShapeFunc.displayMatrix();
+    std::cout << std::endl << "DShape Function values are: " << std::endl;
+    DShapeFunc.displayMatrix();
 }
 
 template<const int order>
 void FiniteElement<order>::get_Integration_Info(Vector<double,INT_PTS+TWO> &p, Vector<double,INT_PTS+TWO> &w){
     p = IntPts;
     w = IntWts;
+}
+
+template<const int order>
+void FiniteElement<order>::H1_ContinuousShapeFn(){
+    for(int i=0; i<order+ONE; i++){
+        Vector<double,TWO+INT_PTS> t1, t2;
+        LagrangePolynomial(IntPts, InterpPts.getValue(i), InterpPts, t1, t2);
+        std::cout << std::endl;
+        ShapeFunc.setRow(i,t1);
+        DShapeFunc.setRow(i,t2);
+    }
 }
 
 // /* ------------------------------------------------------------------------------------------------------------ */

@@ -4,11 +4,11 @@
 
 int main(){
     const int N = 20;
-    Mesh<N> m(-1.0f,1.0f);
+    Mesh<N> m(-10.0,10.0);
     m.gen_1D_mesh();
     
-    const int order = 4;
+    const int order = 3;
     FiniteElementSpace<order,N> fes(m);
-    fes.display_FE_Info(THREE);
+    fes.display_FE_Info(TWO);
     return 0;
 }

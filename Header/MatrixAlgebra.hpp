@@ -200,6 +200,7 @@ class Matrix{
         void Invert(Matrix<T,n,n> &inv);
         T *exportRowMajor();
         void setRowMajor(T *rowMajor, int Size);
+        void displayMatrix();
 };
 
 /// Constructor to initialize the Matrix object with 0 values at all entries
@@ -484,6 +485,19 @@ void Matrix<T,m,n>::setRowMajor(T *rowMajor, int Size){
             }
         }
     }
+}
+
+/// Display contents of the matrix
+template<typename T, const int m, const int n>
+void Matrix<T,m,n>::displayMatrix(){
+    
+    for (int i=0; i<m; i++){
+        Vector<T,n> r;
+        getRow(i,r);
+        r.displayVector();
+        std::cout << std::endl;
+    }    
+
 }
 
 #endif
