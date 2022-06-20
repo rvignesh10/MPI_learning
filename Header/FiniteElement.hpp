@@ -69,7 +69,9 @@ class FiniteElement {
         Matrix<double,order+ONE,TWO+INT_PTS> DShapeFunc;
     public:
         //FiniteElement();
-        void set_Element_Info(int id, double current_loc, double next_loc);
+        void set_Element_Info(int id, int &k, double current_loc, double next_loc);
+        void set_Element_Info(int id, int &k, double current_loc, double next_loc, 
+                              int DOF_prevWorld);
         void print_Element_Info();
         void get_Integration_Info(Vector<double,INT_PTS+TWO> &p, Vector<double,INT_PTS+TWO> &w);
         void get_Boundary_Info(Vector<double,TWO> &b){b = ElemBdr;}
@@ -77,7 +79,7 @@ class FiniteElement {
 };
 
 template<const int order>
-void FiniteElement<order>::set_Element_Info(int id, double current_loc, double next_loc){
+void FiniteElement<order>::set_Element_Info(int id, int &k, double current_loc, double next_loc){
     ElemID = id+ONE;
     DOF_loc = (current_loc+next_loc)/2.0 ;
     ElemBdr.setValue(ZERO,current_loc); ElemBdr.setValue(ONE,next_loc);
@@ -85,6 +87,29 @@ void FiniteElement<order>::set_Element_Info(int id, double current_loc, double n
     local_mesh.getX(InterpPts);
     IntegrationRule<double,TWO+INT_PTS>(current_loc,next_loc,IntPts,IntWts);
     H1_ContinuousShapeFn();
+    for (int i=0; i<order+ONE; i++){
+        InterpDOF.setValue(i,k);
+        ++k;
+    }
+    k -= 1;
+}
+
+template<const int order>
+void FiniteElement<order>::set_Element_Info(int id, int &k, double current_loc, double next_loc,
+                                             int DOF_prevWorld){
+    
+    ElemID = id+ONE;
+    DOF_loc = (current_loc+next_loc)/2.0 ;
+    ElemBdr.setValue(ZERO,current_loc); ElemBdr.setValue(ONE,next_loc);
+    Mesh<order> local_mesh(current_loc,next_loc);
+    local_mesh.getX(InterpPts);
+    IntegrationRule<double,TWO+INT_PTS>(current_loc,next_loc,IntPts,IntWts);
+    H1_ContinuousShapeFn();
+    for (int i=0; i<order+ONE; i++){
+        InterpDOF.setValue(i,(DOF_prevWorld-ONE)+k);
+        ++k;
+    }
+    k -= 1;
 }
 
 template<const int order>
@@ -100,6 +125,8 @@ void FiniteElement<order>::print_Element_Info(){
     ShapeFunc.displayMatrix();
     std::cout << std::endl << "DShape Function values are: " << std::endl;
     DShapeFunc.displayMatrix();
+    std::cout << std::endl << "Interpolation DOF are: " << std::endl;
+    InterpDOF.displayVector();
 }
 
 template<const int order>
@@ -127,16 +154,28 @@ class FiniteElementSpace {
 
     public:
         FiniteElementSpace(Mesh<Nelem> m);
+        FiniteElementSpace(Mesh<Nelem> m, int world_rank);
         void display_FE_Info(int id){fe[id].print_Element_Info();}
         void get_FE_Integration_Info(int id, Vector<double,INT_PTS+TWO> &p, Vector<double,INT_PTS+TWO> &w);
         void get_FE_Boundary_Info(int id, Vector<double,TWO> &b);
-        ~FiniteElementSpace(){std::cout<<"Object is deleted"<<std::endl;}
 };
 
 template<const int order, const int Nelem>
 FiniteElementSpace<order,Nelem>::FiniteElementSpace(Mesh<Nelem> m){
+    int k = 1;
     for (int i=0; i<Nelem; i++){
-        fe[i].set_Element_Info(i, m.get_location(i), m.get_location(i+1));
+        fe[i].set_Element_Info(i, k, m.get_location(i), m.get_location(i+ONE));
+    }
+}
+
+template<const int order, const int Nelem>
+FiniteElementSpace<order,Nelem>::FiniteElementSpace(Mesh<Nelem> m, int world_rank){
+    // Total DOF in each batch
+    int NelemTot = world_rank*Nelem;
+    int DOF_prevWorld = (NelemTot+1) + NelemTot * (order-ONE); 
+    int k = 1;
+    for (int i=0; i<Nelem; i++){
+        fe[i].set_Element_Info(i, k, m.get_location(i), m.get_location(i+1), DOF_prevWorld);
     }
 }
 
