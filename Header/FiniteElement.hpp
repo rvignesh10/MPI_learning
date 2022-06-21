@@ -6,6 +6,8 @@
 #include "IntegrationRule.hpp"
 #include "LagrangePoly.hpp"
 
+class AddDomainIntegrators;
+
 template<const int Nelem>
 class Mesh {
     private: 
@@ -59,7 +61,6 @@ class FiniteElement {
 
     private: 
         int ElemID;
-        double DOF_loc;
         Vector<double,TWO> ElemBdr;
         Vector<double,order+ONE> InterpPts;
         Vector<int,order+ONE> InterpDOF;
@@ -67,6 +68,7 @@ class FiniteElement {
         Vector<double,TWO+INT_PTS> IntWts;
         Matrix<double,order+ONE,TWO+INT_PTS> ShapeFunc;
         Matrix<double,order+ONE,TWO+INT_PTS> DShapeFunc;
+        double Jacobian;
     public:
         //FiniteElement();
         void set_Element_Info(int id, int &k, double current_loc, double next_loc);
@@ -74,6 +76,8 @@ class FiniteElement {
                               int DOF_prevWorld);
         void print_Element_Info();
         void get_Integration_Info(Vector<double,INT_PTS+TWO> &p, Vector<double,INT_PTS+TWO> &w);
+        void get_Integration_Info(Vector<double,INT_PTS+TWO> &w, Vector<int,order+ONE> &DOF,
+                                  Matrix<double,order+ONE,INT_PTS+TWO> &DShape, double &jac);
         void get_Boundary_Info(Vector<double,TWO> &b){b = ElemBdr;}
         void H1_ContinuousShapeFn();
 };
@@ -81,7 +85,7 @@ class FiniteElement {
 template<const int order>
 void FiniteElement<order>::set_Element_Info(int id, int &k, double current_loc, double next_loc){
     ElemID = id+ONE;
-    DOF_loc = (current_loc+next_loc)/2.0 ;
+    Jacobian= (next_loc - current_loc)/2.0 ;
     ElemBdr.setValue(ZERO,current_loc); ElemBdr.setValue(ONE,next_loc);
     Mesh<order> local_mesh(current_loc,next_loc);
     local_mesh.getX(InterpPts);
@@ -99,7 +103,7 @@ void FiniteElement<order>::set_Element_Info(int id, int &k, double current_loc, 
                                              int DOF_prevWorld){
     
     ElemID = id+ONE;
-    DOF_loc = (current_loc+next_loc)/2.0 ;
+    Jacobian= (next_loc - current_loc)/2.0 ;
     ElemBdr.setValue(ZERO,current_loc); ElemBdr.setValue(ONE,next_loc);
     Mesh<order> local_mesh(current_loc,next_loc);
     local_mesh.getX(InterpPts);
@@ -115,7 +119,7 @@ void FiniteElement<order>::set_Element_Info(int id, int &k, double current_loc, 
 template<const int order>
 void FiniteElement<order>::print_Element_Info(){
     std::cout << "Element ID is: " << ElemID << std::endl;
-    std::cout << "Element Center is: " << DOF_loc << std::endl << "Integration points are:" << std::endl;
+    std::cout << "Integration points are:" << std::endl;
     IntPts.displayVector();
     std::cout << std::endl << "Integration weights are:" << std::endl;
     IntWts.displayVector();
@@ -123,10 +127,10 @@ void FiniteElement<order>::print_Element_Info(){
     InterpPts.displayVector();
     std::cout << std::endl << "Shape Function values are: " << std::endl;
     ShapeFunc.displayMatrix();
-    std::cout << std::endl << "DShape Function values are: " << std::endl;
+    std::cout << "DShape Function values are: " << std::endl;
     DShapeFunc.displayMatrix();
-    std::cout << std::endl << "Interpolation DOF are: " << std::endl;
-    InterpDOF.displayVector();
+    std::cout << "Interpolation DOF are: " << std::endl;
+    InterpDOF.displayVector();std::cout << std::endl;
 }
 
 template<const int order>
@@ -136,11 +140,19 @@ void FiniteElement<order>::get_Integration_Info(Vector<double,INT_PTS+TWO> &p, V
 }
 
 template<const int order>
+void FiniteElement<order>::get_Integration_Info(Vector<double,INT_PTS+TWO> &w, Vector<int,order+ONE> &DOF,
+                                  Matrix<double,order+ONE,INT_PTS+TWO> &DShape, double &jac){
+    w = IntWts;
+    DOF = InterpDOF;
+    DShape = DShapeFunc;
+    jac = Jacobian;
+}
+
+template<const int order>
 void FiniteElement<order>::H1_ContinuousShapeFn(){
     for(int i=0; i<order+ONE; i++){
         Vector<double,TWO+INT_PTS> t1, t2;
         LagrangePolynomial(IntPts, InterpPts.getValue(i), InterpPts, t1, t2);
-        std::cout << std::endl;
         ShapeFunc.setRow(i,t1);
         DShapeFunc.setRow(i,t2);
     }
@@ -158,6 +170,7 @@ class FiniteElementSpace {
         void display_FE_Info(int id){fe[id].print_Element_Info();}
         void get_FE_Integration_Info(int id, Vector<double,INT_PTS+TWO> &p, Vector<double,INT_PTS+TWO> &w);
         void get_FE_Boundary_Info(int id, Vector<double,TWO> &b);
+        friend class AddDomainIntegrators;
 };
 
 template<const int order, const int Nelem>
@@ -188,5 +201,95 @@ template<const int order, const int Nelem>
 void FiniteElementSpace<order,Nelem>::get_FE_Boundary_Info(int id, Vector<double,TWO> &b){
     fe[id].get_Boundary_Info(b);
 }
+
+/* -------------------------------------------------------------------------------------------------------------------------------------------- */
+
+class AddDomainIntegrators{
+    private:
+    // AppendList Head_diff;
+    // AppendList Head_mass;
+    public:
+    //AddDomainIntegrators();
+    template<const int order, const int Nelem>
+    void DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes, AppendList **Head_diff);
+    //void DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes);
+    template<const int order, const int Nelem>
+    void MassIntegrator(FiniteElementSpace<order,Nelem> fes);
+    //void getDiffusionHead(AppendList *p){p = &Head_diff;}
+    // void getMassHead(AppendList *p){p = Head_mass;}
+};
+
+// AddDomainIntegrators::AddDomainIntegrators(){
+//     // &Head_diff = nullptr;
+//     // &Head_mass = nullptr;
+//     std::cout << "created heads nodes" << std::endl;
+// }
+
+template<const int order, const int Nelem>
+void AddDomainIntegrators::DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes,
+                                               AppendList **Head_diff){
+    Vector<double,INT_PTS+TWO> weights;
+    Vector<int,order+ONE> DOF;
+    Matrix<double,order+ONE,INT_PTS+TWO> DShape;
+    double jac;
+    Vector<double,INT_PTS+TWO> Nix, Njx,f;
+    AppendList *Node = new AppendList;
+    AppendList *temp = Node;
+    *Head_diff = Node;
+    //std::cout <<"Head is assigned to Node and Node is: " << Node << std::endl;
+    for (int e=0; e<Nelem; e++){
+        fes.fe[e].get_Integration_Info(weights,DOF,DShape,jac);
+        for (int i=0; i<order+ONE; i++){
+            DShape.getRow(i,Nix);
+            for (int j=0; j<order+ONE; j++){ 
+                Node->i = DOF.getValue(i)-1;
+                Node->j = DOF.getValue(j)-1;
+                DShape.getRow(j,Njx);
+                Nix.ElementMultiplication(Njx,f);
+                Node->value = weights.dotProduct(f) * jac;
+                Node = new AppendList;
+                temp->next = Node;
+                temp = Node;
+            }
+        }
+    }
+    Node->next = NULL;
+    // delete Node;
+    // delete temp;
+    // std::cout << "You are Here and Head_diff is: "<< Head_diff << std::endl;
+}
+
+// template<const int order, const int Nelem>
+// void AddDomainIntegrators::DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes){
+//     Vector<double,INT_PTS+TWO> weights;
+//     Vector<double,order+ONE> DOF;
+//     Matrix<double,order+ONE,INT_PTS+TWO> DShape;
+//     double jac;
+//     Vector<double,INT_PTS+TWO> Nix, Njx,f;
+//     AppendList *Node = new AppendList;
+//     AppendList *temp = Node;
+//     &Head_diff = Node;
+//     std::cout <<"Head is assigned to Node and Node is: " << Node << std::endl;
+//     for (int e=0; e<Nelem; e++){
+//         fes.fe[e].get_Integration_Info(weights,DOF,DShape,jac);
+//         for (int i=0; i<order+ONE; i++){
+//             DShape.getRow(i,Nix);
+//             for (int j=0; j<order+ONE; j++){ 
+//                 Node->i = DOF.getValue(i);
+//                 Node->j = DOF.getValue(j);
+//                 DShape.getRow(j,Njx);
+//                 Nix.ElementMultiplication(Njx,f);
+//                 Node->value = weights.dotProduct(f) * jac;
+//                 Node = new AppendList;
+//                 temp->next = Node;
+//                 temp = Node;
+//             }
+//         }
+//     }
+//     // Node->next = NULL;
+//     // delete Node;
+//     // delete temp;
+//     std::cout << "You are Here and Head_diff is: "<< Head_diff << std::endl;
+// }
 
 #endif

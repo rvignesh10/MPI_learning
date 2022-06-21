@@ -165,7 +165,14 @@ template<typename T, const int N>
 void Vector<T,N>::displayVector(){
     for(int i=0; i<N; i++){std::cout<<m_Vector[i]<<" ";}
 }
-
+/* ---------------------------------------------------------------------------------------------------------------------  */
+struct AppendList{
+    int i;
+    int j;
+    double value;
+    AppendList *next;
+    AppendList(){i=0; j=0; value = 0.0; next = nullptr;}
+};
 /* ---------------------------------------------------------------------------------------------------------------------  */
 template<typename T, const int m, const int n>
 class Matrix{
@@ -182,6 +189,7 @@ class Matrix{
         Matrix(Vector<T,m> v1, Vector<T,n> v2);
         void init_();
         void setValue(int i, int j, T val);
+        T getValue(int i, int j);
         void setRow(int row_idx, Vector<T,n> r);
         void setColumn(int col_idx, Vector<T,m> c);
         void getRow(int row_idx, Vector<T,n> &r);
@@ -200,6 +208,7 @@ class Matrix{
         void Invert(Matrix<T,n,n> &inv);
         T *exportRowMajor();
         void setRowMajor(T *rowMajor, int Size);
+        void AssignFromList(AppendList *head);
         void displayMatrix();
 };
 
@@ -271,6 +280,18 @@ void Matrix<T,m,n>::setValue(int i, int j, T val){
     }
     else {
         m_Matrix[i][j] = val;
+    }
+}
+
+/// Get value from a index i,j
+template<typename T, const int m, const int n>
+T Matrix<T,m,n>::getValue(int i, int j){
+    if(i>=m || j>=n){
+        std::cerr<<"Trying to access invalid index values" << std::endl;
+        return (T)0.0;
+    }
+    else{
+        return m_Matrix[i][j];
     }
 }
 
@@ -485,6 +506,25 @@ void Matrix<T,m,n>::setRowMajor(T *rowMajor, int Size){
             }
         }
     }
+}
+
+/// Using LinkedList to append(+add) values to Matrix elements
+template<typename T, const int m, const int n>
+void Matrix<T,m,n>::AssignFromList(AppendList *head){
+    //std::cout<< "you are trying to append now and the head is: " << head << std::endl;
+    int i; int j;
+    for (;head != nullptr;head=head->next){
+        //std::cout<< "you are trying to append now and the head is: " << head << std::endl;
+        T temp = getValue(head->i,head->j);
+        i = head->i;
+        j = head->j;
+        //std::cout << head->value << std::endl;
+        //std::cout << "temp is: " << temp << std::endl;
+        //std::cout << "new val is: " << temp+head->value << std::endl;
+        setValue(head->i,head->j, temp+(T)head->value);
+        //std::cout << m_Matrix[head->i][head->j] << std::endl;
+    }
+
 }
 
 /// Display contents of the matrix
