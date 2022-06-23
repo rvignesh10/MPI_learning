@@ -4,6 +4,14 @@
 #include <iostream>
 #include <vector>
 #include "constants.hpp"
+
+struct AppendList{
+    int i;
+    int j;
+    double value;
+    AppendList *next;
+    AppendList(){i=0; j=0; value = 0.0; next = nullptr;}
+};
 /* -------------------------------------------------------------------------------------------------------------------- */
 template<typename T, const int N>
 class Vector{
@@ -27,6 +35,7 @@ class Vector{
         void ElementMultiplication(Vector<T,N> v_in, Vector<T,N> &v_out);
         T dotProduct(Vector<T,N> a);
         T *getData();
+        void AssignFromList(AppendList *head);
         void displayVector();
 
 };
@@ -160,19 +169,22 @@ T *Vector<T,N>::getData(){
     return temp_vector;
 }
 
+template<typename T, const int N>
+void Vector<T,N>::AssignFromList(AppendList * head){
+    int i;
+    for (;head != nullptr;head=head->next){
+        T temp = getValue(head->i);
+        i = head->i;
+        setValue(head->i, temp+(T)head->value);
+    }
+}
+
 /// Prints vector
 template<typename T, const int N>
 void Vector<T,N>::displayVector(){
     for(int i=0; i<N; i++){std::cout<<m_Vector[i]<<" ";}
 }
 /* ---------------------------------------------------------------------------------------------------------------------  */
-struct AppendList{
-    int i;
-    int j;
-    double value;
-    AppendList *next;
-    AppendList(){i=0; j=0; value = 0.0; next = nullptr;}
-};
 /* ---------------------------------------------------------------------------------------------------------------------  */
 template<typename T, const int m, const int n>
 class Matrix{
@@ -511,18 +523,12 @@ void Matrix<T,m,n>::setRowMajor(T *rowMajor, int Size){
 /// Using LinkedList to append(+add) values to Matrix elements
 template<typename T, const int m, const int n>
 void Matrix<T,m,n>::AssignFromList(AppendList *head){
-    //std::cout<< "you are trying to append now and the head is: " << head << std::endl;
     int i; int j;
     for (;head != nullptr;head=head->next){
-        //std::cout<< "you are trying to append now and the head is: " << head << std::endl;
         T temp = getValue(head->i,head->j);
         i = head->i;
         j = head->j;
-        //std::cout << head->value << std::endl;
-        //std::cout << "temp is: " << temp << std::endl;
-        //std::cout << "new val is: " << temp+head->value << std::endl;
         setValue(head->i,head->j, temp+(T)head->value);
-        //std::cout << m_Matrix[head->i][head->j] << std::endl;
     }
 
 }

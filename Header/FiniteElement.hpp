@@ -2,6 +2,7 @@
 #define FINITE_ELEMENT_H
 
 #include <iostream>
+#include <string>
 #include "MatrixAlgebra.hpp"
 #include "IntegrationRule.hpp"
 #include "LagrangePoly.hpp"
@@ -20,6 +21,7 @@ class Mesh {
         void gen_1D_mesh();
         double get_location(int idx);
         void getX(Vector<double,Nelem+ONE> &x_out);
+        void getDX(double &dx_out){dx_out = dx;}
         void disp_mesh();
 };
 
@@ -76,8 +78,11 @@ class FiniteElement {
                               int DOF_prevWorld);
         void print_Element_Info();
         void get_Integration_Info(Vector<double,INT_PTS+TWO> &p, Vector<double,INT_PTS+TWO> &w);
-        void get_Integration_Info(Vector<double,INT_PTS+TWO> &w, Vector<int,order+ONE> &DOF,
-                                  Matrix<double,order+ONE,INT_PTS+TWO> &DShape, double &jac);
+        void get_Integration_Info(Vector<double,INT_PTS+TWO> &w, 
+                                  Vector<int,order+ONE> &DOF,
+                                  double &jac,
+                                  Matrix<double,order+ONE,INT_PTS+TWO> *DShape = new Matrix<double,order+ONE,INT_PTS+TWO>,
+                                  Matrix<double,order+ONE,INT_PTS+TWO> *Shape  = new Matrix<double,order+ONE,INT_PTS+TWO>);
         void get_Boundary_Info(Vector<double,TWO> &b){b = ElemBdr;}
         void H1_ContinuousShapeFn();
 };
@@ -140,11 +145,15 @@ void FiniteElement<order>::get_Integration_Info(Vector<double,INT_PTS+TWO> &p, V
 }
 
 template<const int order>
-void FiniteElement<order>::get_Integration_Info(Vector<double,INT_PTS+TWO> &w, Vector<int,order+ONE> &DOF,
-                                  Matrix<double,order+ONE,INT_PTS+TWO> &DShape, double &jac){
+void FiniteElement<order>::get_Integration_Info(Vector<double,INT_PTS+TWO> &w,
+                                                Vector<int,order+ONE> &DOF,
+                                                double &jac, 
+                                                Matrix<double,order+ONE,INT_PTS+TWO> *DShape,
+                                                Matrix<double,order+ONE,INT_PTS+TWO> *Shape){
     w = IntWts;
     DOF = InterpDOF;
-    DShape = DShapeFunc;
+    *Shape =  ShapeFunc;
+    *DShape = DShapeFunc;
     jac = Jacobian;
 }
 
@@ -206,24 +215,13 @@ void FiniteElementSpace<order,Nelem>::get_FE_Boundary_Info(int id, Vector<double
 
 class AddDomainIntegrators{
     private:
-    // AppendList Head_diff;
-    // AppendList Head_mass;
     public:
-    //AddDomainIntegrators();
     template<const int order, const int Nelem>
-    void DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes, AppendList **Head_diff);
-    //void DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes);
+    void DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes, AppendList **Head_diff );
     template<const int order, const int Nelem>
-    void MassIntegrator(FiniteElementSpace<order,Nelem> fes);
-    //void getDiffusionHead(AppendList *p){p = &Head_diff;}
-    // void getMassHead(AppendList *p){p = Head_mass;}
+    void MassIntegrator(FiniteElementSpace<order,Nelem> fes, AppendList **Head_mass);
 };
 
-// AddDomainIntegrators::AddDomainIntegrators(){
-//     // &Head_diff = nullptr;
-//     // &Head_mass = nullptr;
-//     std::cout << "created heads nodes" << std::endl;
-// }
 
 template<const int order, const int Nelem>
 void AddDomainIntegrators::DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes,
@@ -236,9 +234,8 @@ void AddDomainIntegrators::DiffusionIntegrator(FiniteElementSpace<order,Nelem> f
     AppendList *Node = new AppendList;
     AppendList *temp = Node;
     *Head_diff = Node;
-    //std::cout <<"Head is assigned to Node and Node is: " << Node << std::endl;
     for (int e=0; e<Nelem; e++){
-        fes.fe[e].get_Integration_Info(weights,DOF,DShape,jac);
+        fes.fe[e].get_Integration_Info(weights,DOF,jac,&DShape);
         for (int i=0; i<order+ONE; i++){
             DShape.getRow(i,Nix);
             for (int j=0; j<order+ONE; j++){ 
@@ -254,42 +251,39 @@ void AddDomainIntegrators::DiffusionIntegrator(FiniteElementSpace<order,Nelem> f
         }
     }
     Node->next = NULL;
-    // delete Node;
-    // delete temp;
-    // std::cout << "You are Here and Head_diff is: "<< Head_diff << std::endl;
 }
 
-// template<const int order, const int Nelem>
-// void AddDomainIntegrators::DiffusionIntegrator(FiniteElementSpace<order,Nelem> fes){
-//     Vector<double,INT_PTS+TWO> weights;
-//     Vector<double,order+ONE> DOF;
-//     Matrix<double,order+ONE,INT_PTS+TWO> DShape;
-//     double jac;
-//     Vector<double,INT_PTS+TWO> Nix, Njx,f;
-//     AppendList *Node = new AppendList;
-//     AppendList *temp = Node;
-//     &Head_diff = Node;
-//     std::cout <<"Head is assigned to Node and Node is: " << Node << std::endl;
-//     for (int e=0; e<Nelem; e++){
-//         fes.fe[e].get_Integration_Info(weights,DOF,DShape,jac);
-//         for (int i=0; i<order+ONE; i++){
-//             DShape.getRow(i,Nix);
-//             for (int j=0; j<order+ONE; j++){ 
-//                 Node->i = DOF.getValue(i);
-//                 Node->j = DOF.getValue(j);
-//                 DShape.getRow(j,Njx);
-//                 Nix.ElementMultiplication(Njx,f);
-//                 Node->value = weights.dotProduct(f) * jac;
-//                 Node = new AppendList;
-//                 temp->next = Node;
-//                 temp = Node;
-//             }
-//         }
-//     }
-//     // Node->next = NULL;
-//     // delete Node;
-//     // delete temp;
-//     std::cout << "You are Here and Head_diff is: "<< Head_diff << std::endl;
-// }
+template<const int order, const int Nelem>
+void AddDomainIntegrators::MassIntegrator(FiniteElementSpace<order,Nelem> fes,
+                                               AppendList **Head_mass){
+    Vector<double,INT_PTS+TWO> weights;
+    Vector<int,order+ONE> DOF;
+    Matrix<double,order+ONE,INT_PTS+TWO> Shape;
+    double jac;
+    Vector<double,INT_PTS+TWO> Ni, Nj,f;
+    AppendList *Node = new AppendList;
+    AppendList *temp = Node;
+    *Head_mass = Node;
+    for (int e=0; e<Nelem; e++){
+        fes.fe[e].get_Integration_Info(weights,DOF,jac,new Matrix<double,order+ONE,INT_PTS+TWO>,&Shape);
+        for (int i=0; i<order+ONE; i++){
+            Shape.getRow(i,Ni);
+            for (int j=0; j<order+ONE; j++){ 
+                Node->i = DOF.getValue(i)-1;
+                Node->j = DOF.getValue(j)-1;
+                Shape.getRow(j,Nj);
+                Ni.ElementMultiplication(Nj,f);
+                Node->value = weights.dotProduct(f) * jac;
+                Node = new AppendList;
+                temp->next = Node;
+                temp = Node;
+            }
+        }
+    }
+    Node->next = NULL;
+}
+
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------- */
 
 #endif
