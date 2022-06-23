@@ -4,6 +4,14 @@
 #include <iostream>
 #include <vector>
 #include "constants.hpp"
+
+struct AppendList{
+    int i;
+    int j;
+    double value;
+    AppendList *next;
+    AppendList(){i=0; j=0; value = 0.0; next = nullptr;}
+};
 /* -------------------------------------------------------------------------------------------------------------------- */
 template<typename T, const int N>
 class Vector{
@@ -27,6 +35,7 @@ class Vector{
         void ElementMultiplication(Vector<T,N> v_in, Vector<T,N> &v_out);
         T dotProduct(Vector<T,N> a);
         T *getData();
+        void AssignFromList(AppendList *head);
         void displayVector();
 
 };
@@ -160,12 +169,22 @@ T *Vector<T,N>::getData(){
     return temp_vector;
 }
 
+template<typename T, const int N>
+void Vector<T,N>::AssignFromList(AppendList * head){
+    int i;
+    for (;head != nullptr;head=head->next){
+        T temp = getValue(head->i);
+        i = head->i;
+        setValue(head->i, temp+(T)head->value);
+    }
+}
+
 /// Prints vector
 template<typename T, const int N>
 void Vector<T,N>::displayVector(){
     for(int i=0; i<N; i++){std::cout<<m_Vector[i]<<" ";}
 }
-
+/* ---------------------------------------------------------------------------------------------------------------------  */
 /* ---------------------------------------------------------------------------------------------------------------------  */
 template<typename T, const int m, const int n>
 class Matrix{
@@ -182,6 +201,7 @@ class Matrix{
         Matrix(Vector<T,m> v1, Vector<T,n> v2);
         void init_();
         void setValue(int i, int j, T val);
+        T getValue(int i, int j);
         void setRow(int row_idx, Vector<T,n> r);
         void setColumn(int col_idx, Vector<T,m> c);
         void getRow(int row_idx, Vector<T,n> &r);
@@ -200,6 +220,8 @@ class Matrix{
         void Invert(Matrix<T,n,n> &inv);
         T *exportRowMajor();
         void setRowMajor(T *rowMajor, int Size);
+        void AssignFromList(AppendList *head);
+        void displayMatrix();
 };
 
 /// Constructor to initialize the Matrix object with 0 values at all entries
@@ -270,6 +292,18 @@ void Matrix<T,m,n>::setValue(int i, int j, T val){
     }
     else {
         m_Matrix[i][j] = val;
+    }
+}
+
+/// Get value from a index i,j
+template<typename T, const int m, const int n>
+T Matrix<T,m,n>::getValue(int i, int j){
+    if(i>=m || j>=n){
+        std::cerr<<"Trying to access invalid index values" << std::endl;
+        return (T)0.0;
+    }
+    else{
+        return m_Matrix[i][j];
     }
 }
 
@@ -484,6 +518,32 @@ void Matrix<T,m,n>::setRowMajor(T *rowMajor, int Size){
             }
         }
     }
+}
+
+/// Using LinkedList to append(+add) values to Matrix elements
+template<typename T, const int m, const int n>
+void Matrix<T,m,n>::AssignFromList(AppendList *head){
+    int i; int j;
+    for (;head != nullptr;head=head->next){
+        T temp = getValue(head->i,head->j);
+        i = head->i;
+        j = head->j;
+        setValue(head->i,head->j, temp+(T)head->value);
+    }
+
+}
+
+/// Display contents of the matrix
+template<typename T, const int m, const int n>
+void Matrix<T,m,n>::displayMatrix(){
+    
+    for (int i=0; i<m; i++){
+        Vector<T,n> r;
+        getRow(i,r);
+        r.displayVector();
+        std::cout << std::endl;
+    }    
+
 }
 
 #endif
